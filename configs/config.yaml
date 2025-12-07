@@ -1,0 +1,67 @@
+# DermaLens Configuration
+
+# Dataset Configuration
+dataset:
+  dataset_path: "./dataset"
+  train_split: "train"
+  valid_split: "valid"
+  test_split: "test"
+  image_size: 224
+  num_classes: 6
+  class_names:
+    - "Dermatitis"
+    - "Demodicosis"
+    - "Fungal Infections"
+    - "Healthy"
+    - "Hypersensitivity"
+    - "Ringworm"
+
+# Training Configuration
+training:
+  num_epochs: 100
+  batch_size: 32
+  learning_rate: 0.001
+  weight_decay: 0.0001
+  warmup_epochs: 5
+  early_stopping_patience: 15
+  model_save_dir: "./checkpoints"
+  log_dir: "./logs"
+
+# Model Configuration
+model:
+  architecture: "resnet50"
+  pretrained: true
+  num_classes: 6
+  dropout_rate: 0.3
+
+# Data Augmentation
+augmentation:
+  random_flip: true
+  random_rotation: 15
+  color_jitter: true
+  brightness: 0.2
+  contrast: 0.2
+  saturation: 0.2
+  hue: 0.1
+  random_resized_crop: true
+  scale_min: 0.8
+  scale_max: 1.0
+  aspect_ratio_min: 0.9
+  aspect_ratio_max: 1.1
+  gaussian_blur: true
+
+# API Configuration
+api:
+  host: "0.0.0.0"
+  port: 8000
+  reload: true
+  max_upload_size: 10485760  # 10MB in bytes
+  model_checkpoint: "./checkpoints/best_model.pth"
+
+# Inference Configuration
+inference:
+  confidence_threshold: 0.3
+  use_tta: false  # Test Time Augmentation
+
+# GPU Configuration
+device: "cuda"  # or "cpu"
