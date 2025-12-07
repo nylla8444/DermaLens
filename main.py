@@ -129,7 +129,17 @@ app.add_middleware(
 )
 
 # Mount static files
-app.mount("/static", StaticFiles(directory="static"), name="static")
+static_dir = Path(__file__).parent / "static"
+logger.info(f"Static files directory: {static_dir}")
+logger.info(f"Static directory exists: {static_dir.exists()}")
+if static_dir.exists():
+    logger.info(f"Static files: {list(static_dir.rglob('*'))}")
+
+# Check if directory exists, create if needed
+if not static_dir.exists():
+    logger.warning(f"Static directory does not exist: {static_dir}")
+else:
+    app.mount("/static", StaticFiles(directory=str(static_dir), check_dir=True), name="static")
 
 
 # Initialize FastAPI app with lifespan
@@ -284,7 +294,17 @@ async def predict(file: UploadFile = File(...)):
 @app.get("/ui")
 async def ui():
     """Serve web UI"""
-    return FileResponse("templates/index.html")
+    template_path = Path(__file__).parent / "templates" / "index.html"
+    return FileResponse(str(template_path))
+
+
+@app.get("/static/js/app.js")
+async def app_js():
+    """Serve app.js directly as fallback"""
+    app_js_path = Path(__file__).parent / "static" / "js" / "app.js"
+    if app_js_path.exists():
+        return FileResponse(str(app_js_path), media_type="application/javascript")
+    raise HTTPException(status_code=404, detail="app.js not found")
 
 
 if __name__ == "__main__":
