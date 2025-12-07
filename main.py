@@ -1,6 +1,11 @@
 """
 FastAPI inference server for DermaLens
 """
+import os
+os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'  # Suppress TensorFlow oneDNN warnings
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'   # Suppress TensorFlow info logs
+
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -25,25 +30,6 @@ logger = logging.getLogger(__name__)
 config_path = Path("configs/config.yaml")
 with open(config_path, 'r') as f:
     config = yaml.safe_load(f)
-
-# Initialize FastAPI app
-app = FastAPI(
-    title="DermaLens API",
-    description="AI-powered dog skin lesion classification",
-    version="1.0.0"
-)
-
-# Add CORS middleware
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# Mount static files
-app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Global variables
 model = None
@@ -110,10 +96,49 @@ def load_model():
         return False
 
 
-@app.on_event("startup")
-async def startup_event():
-    """Load model on startup"""
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Handle startup and shutdown events"""
+    # Startup
     load_model()
+    yield
+    # Shutdown
+    if model is not None:
+        logger.info("Cleaning up model...")
+        # Move model to CPU and clear CUDA memory
+        if device == "cuda":
+            model.cpu()
+            torch.cuda.empty_cache()
+
+
+# Initialize FastAPI app with lifespan
+app = FastAPI(
+    title="DermaLens API",
+    description="AI-powered dog skin lesion classification",
+    version="1.0.0",
+    lifespan=lifespan
+)
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Mount static files
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+
+# Initialize FastAPI app with lifespan
+app = FastAPI(
+    title="DermaLens API",
+    description="AI-powered dog skin lesion classification",
+    version="1.0.0",
+    lifespan=lifespan
+)
 
 
 @app.get("/")
