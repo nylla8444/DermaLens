@@ -37,34 +37,28 @@ device = None
 class_names = None
 class_info = {
     "Dermatitis": {
-        "description": "Inflammatory skin condition often caused by allergies, irritants, or infections",
-        "recommendation": "Consult a veterinarian. Keep affected area clean and dry. Avoid irritants.",
-        "severity": "Medium"
+        "description": "Contact dermatitis is an inflammatory skin condition caused by direct contact with irritants or allergens such as certain plants, chemicals, cleaning products, or materials. It can cause redness, itching, scaling, and discomfort. Common in dogs with sensitive skin or exposure to environmental triggers.",
+        "recommendation": "Identify and remove the source of irritation. Rinse the affected area with cool water. Avoid harsh chemicals or cleaners around your pet. Consider hypoallergenic bedding and bowls. Consult your veterinarian if symptoms persist or worsen, as prescription treatments may be needed."
     },
     "Demodicosis": {
-        "description": "Caused by Demodex mites; can be localized or generalized",
-        "recommendation": "Consult a veterinarian immediately. Requires prescription treatment.",
-        "severity": "High"
+        "description": "Demodicosis is caused by Demodex mites that naturally live in hair follicles but overpopulate when the immune system is compromised. Can be localized (small patches) or generalized (widespread). Common in puppies, elderly dogs, or immunocompromised pets. Causes hair loss, redness, scaling, and skin thickening.",
+        "recommendation": "Schedule an immediate veterinary appointment for skin scraping diagnosis. Treatment requires prescription medication (topical or oral). Avoid stressful situations that weaken the immune system. Maintain clean bedding and living environment. Do not attempt home treatment as it requires veterinary supervision."
     },
     "Fungal Infections": {
-        "description": "Fungal infection (ringworm or other fungal species)",
-        "recommendation": "Consult a veterinarian. Use antifungal treatments as prescribed.",
-        "severity": "High"
+        "description": "Fungal skin infections include ringworm and other fungal species that affect the skin, hair, and nails. These infections are highly contagious to other pets and humans. Symptoms include circular patches of hair loss, scaly or crusty skin, redness, and itching. Can spread rapidly if untreated.",
+        "recommendation": "Isolate the affected pet from other animals and children immediately. Visit your veterinarian for fungal culture testing and treatment plan. Use antifungal medications as prescribed (typically 6-12 weeks). Thoroughly disinfect all bedding, toys, and living areas. Wash hands after handling the pet. All household pets should be examined."
     },
     "Healthy": {
-        "description": "Skin appears healthy with no visible lesions or abnormalities",
-        "recommendation": "Continue regular grooming and maintenance. Monitor for any changes.",
-        "severity": "None"
+        "description": "No visible signs of skin disease detected. The skin appears healthy with normal coloration, texture, and hair coat. No lesions, redness, scaling, or abnormalities observed. This indicates good overall skin health and proper care.",
+        "recommendation": "Continue your current grooming and care routine. Maintain a balanced diet rich in omega fatty acids for skin health. Provide regular exercise and adequate hydration. Schedule routine veterinary check-ups for preventive care. Monitor for any changes in skin condition. Keep up with flea and tick prevention."
     },
     "Hypersensitivity": {
-        "description": "Allergic reaction or skin sensitivity (food, environmental, or contact allergy)",
-        "recommendation": "Identify and avoid allergens. Consult vet if severe or persistent.",
-        "severity": "Low-Medium"
+        "description": "Hypersensitivity reactions are allergic responses causing skin irritation, itching, redness, inflammation, and sometimes hair loss. Can be triggered by food allergens, environmental factors (pollen, dust mites), flea bites, or contact allergens. May be seasonal or year-round depending on the trigger.",
+        "recommendation": "Identify and eliminate potential allergens through an elimination process. Consider a hypoallergenic diet trial (8-12 weeks). Use veterinarian-recommended flea prevention products year-round. Keep indoor environment clean and dust-free. Consult your vet about antihistamines, omega-3 supplements, or allergy testing for comprehensive management."
     },
     "Ringworm": {
-        "description": "Highly contagious fungal infection",
-        "recommendation": "Isolate pet and consult veterinarian immediately. Treat all contact surfaces.",
-        "severity": "High"
+        "description": "Ringworm is a highly contagious fungal infection (dermatophyte) that affects the skin, hair, and nails. Despite its name, it's not caused by worms. Appears as circular, scaly patches of hair loss with a ring-like appearance. Can spread to humans and other pets through direct contact or contaminated surfaces. Requires immediate attention.",
+        "recommendation": "URGENT: Seek immediate veterinary treatment. Quarantine the infected pet in a separate room away from all animals and people. Thoroughly disinfect all surfaces, bedding, toys, and grooming tools with diluted bleach solution. Wear disposable gloves when handling the pet or cleaning. Complete the full course of antifungal treatment even if symptoms improve. All household members and pets should be examined by a doctor/veterinarian."
     }
 }
 
@@ -267,6 +261,49 @@ async def predict(file: UploadFile = File(...)):
         predicted_class = class_names[predicted_class_idx]
         confidence = float(confidence_scores[predicted_class_idx])
         
+        # Calculate confidence level indicator
+        def get_confidence_level(confidence_score, disease_name):
+            """
+            Determine confidence level indicator based on prediction confidence
+            
+            This is NOT a medical severity rating - it's a visual indicator
+            of how confident the AI model is in its prediction.
+            """
+            # For healthy skin, inverse logic: high confidence = truly healthy
+            if disease_name == "Healthy":
+                if confidence_score >= 0.85:
+                    return "Very High"
+                elif confidence_score >= 0.70:
+                    return "High"
+                else:
+                    return "Moderate"  # Low confidence on "healthy" means uncertain
+            
+            # For diseases: higher confidence = more certain diagnosis
+            if confidence_score >= 0.85:
+                return "Very High"
+            elif confidence_score >= 0.70:
+                return "High"
+            elif confidence_score >= 0.55:
+                return "Moderate"
+            else:
+                return "Low"  # Low confidence suggests uncertain diagnosis
+        
+        # Get base class info
+        base_info = class_info.get(predicted_class, {
+            "description": "No description available",
+            "recommendation": "Consult a veterinarian"
+        })
+        
+        # Calculate confidence level indicator
+        confidence_level = get_confidence_level(confidence, predicted_class)
+        
+        # Create enhanced class info with confidence level
+        enhanced_class_info = {
+            "description": base_info["description"],
+            "recommendation": base_info["recommendation"],
+            "confidence_level": confidence_level
+        }
+        
         # Prepare results
         results = {
             "predicted_class": predicted_class,
@@ -275,11 +312,7 @@ async def predict(file: UploadFile = File(...)):
                 class_names[i]: float(confidence_scores[i])
                 for i in range(len(class_names))
             },
-            "class_info": class_info.get(predicted_class, {
-                "description": "No description available",
-                "recommendation": "Consult a veterinarian",
-                "severity": "Unknown"
-            }),
+            "class_info": enhanced_class_info,
             "device": device,
             "model_version": "1.0.0"
         }

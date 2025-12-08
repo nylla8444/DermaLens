@@ -211,44 +211,46 @@ function displayResults(result) {
     // Set diagnosis name
     document.getElementById('diagnosisName').textContent = formatDiseaseName(predictedClass);
 
-    // Determine severity level from API response
-    let severityLevel = 'low';
-    if (classInfo.severity) {
-        const severityStr = classInfo.severity.toLowerCase();
-        if (severityStr.includes('high')) {
-            severityLevel = 'high';
-        } else if (severityStr.includes('medium') || severityStr.includes('low-medium')) {
-            severityLevel = 'medium';
-        } else if (severityStr === 'none') {
-            severityLevel = 'none';
+    // Determine confidence level from API response
+    let confidenceLevel = 'low';
+    if (classInfo.confidence_level) {
+        const levelStr = classInfo.confidence_level.toLowerCase();
+        if (levelStr.includes('very high')) {
+            confidenceLevel = 'very-high';
+        } else if (levelStr.includes('high')) {
+            confidenceLevel = 'high';
+        } else if (levelStr.includes('moderate')) {
+            confidenceLevel = 'moderate';
+        } else if (levelStr === 'low') {
+            confidenceLevel = 'low';
         }
     }
 
-    // Set severity badge with dynamic styling
-    const severityBadge = document.getElementById('severityBadge');
-    const severityText = document.getElementById('severityText');
-    const severityIcon = severityBadge.querySelector('svg');
+    // Set confidence level badge with dynamic styling
+    const confidenceBadge = document.getElementById('severityBadge');
+    const confidenceLevelText = document.getElementById('severityText');
+    const confidenceIcon = confidenceBadge.querySelector('svg');
 
-    // Update severity text
-    severityText.textContent = classInfo.severity || severityLevel;
+    // Update confidence level text
+    confidenceLevelText.textContent = classInfo.confidence_level || confidenceLevel;
 
-    // Apply severity-based styling
-    if (severityLevel === 'high') {
-        severityBadge.className = 'flex items-center gap-2 bg-red-100 rounded-full px-4 py-2';
-        severityIcon.setAttribute('class', 'w-5 h-5 text-red-600');
-        severityText.className = 'text-red-600 text-base uppercase font-medium';
-    } else if (severityLevel === 'medium') {
-        severityBadge.className = 'flex items-center gap-2 bg-yellow-100 rounded-full px-4 py-2';
-        severityIcon.setAttribute('class', 'w-5 h-5 text-yellow-600');
-        severityText.className = 'text-yellow-600 text-base uppercase font-medium';
-    } else if (severityLevel === 'none') {
-        severityBadge.className = 'flex items-center gap-2 bg-green-100 rounded-full px-4 py-2';
-        severityIcon.setAttribute('class', 'w-5 h-5 text-green-600');
-        severityText.className = 'text-green-600 text-base uppercase font-medium';
+    // Apply confidence level styling
+    if (confidenceLevel === 'very-high') {
+        confidenceBadge.className = 'flex items-center gap-2 bg-green-100 rounded-full px-4 py-2';
+        confidenceIcon.setAttribute('class', 'w-5 h-5 text-green-600');
+        confidenceLevelText.className = 'text-green-600 text-base uppercase font-medium';
+    } else if (confidenceLevel === 'high') {
+        confidenceBadge.className = 'flex items-center gap-2 bg-blue-100 rounded-full px-4 py-2';
+        confidenceIcon.setAttribute('class', 'w-5 h-5 text-blue-600');
+        confidenceLevelText.className = 'text-blue-600 text-base uppercase font-medium';
+    } else if (confidenceLevel === 'moderate') {
+        confidenceBadge.className = 'flex items-center gap-2 bg-yellow-100 rounded-full px-4 py-2';
+        confidenceIcon.setAttribute('class', 'w-5 h-5 text-yellow-600');
+        confidenceLevelText.className = 'text-yellow-600 text-base uppercase font-medium';
     } else {
-        severityBadge.className = 'flex items-center gap-2 bg-[#4A8F6F]/10 rounded-full px-4 py-2';
-        severityIcon.setAttribute('class', 'w-5 h-5 text-[#4A8F6F]');
-        severityText.className = 'text-[#4A8F6F] text-base uppercase font-medium';
+        confidenceBadge.className = 'flex items-center gap-2 bg-orange-100 rounded-full px-4 py-2';
+        confidenceIcon.setAttribute('class', 'w-5 h-5 text-orange-600');
+        confidenceLevelText.className = 'text-orange-600 text-base uppercase font-medium';
     }
 
     // Set confidence with color coding based on level
