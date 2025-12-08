@@ -4,235 +4,355 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DermaLens - Dog Skin Lesion Diagnosis</title>
+    <title>DermaLens - AI-powered Dog Skin Illness Checker</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <style>
-        .gradient-bg {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        * {
+            font-family: 'DM Sans', sans-serif;
         }
 
-        .card-shadow {
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        body {
+            background-color: #F5F1ED;
         }
 
-        .fade-in {
-            animation: fadeIn 0.5s ease-in;
+        .badge-dot {
+            width: 8px;
+            height: 8px;
+            background-color: #E87C7C;
+            border-radius: 50%;
+            animation: blink 2s ease-in-out infinite;
         }
 
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
+        @keyframes blink {
 
-            to {
+            0%,
+            100% {
                 opacity: 1;
-                transform: translateY(0);
+            }
+
+            50% {
+                opacity: 0.3;
             }
         }
 
-        .severity-high {
-            color: #dc2626;
+        .upload-area {
+            transition: all 0.3s ease;
         }
 
-        .severity-medium {
-            color: #f59e0b;
+        .upload-area.drag-over {
+            border-color: #1A1A1A;
+            background-color: #E8E4DF;
         }
 
-        .severity-low {
-            color: #10b981;
+        .shadow-custom {
+            box-shadow: 0px 8px 10px -6px rgba(0, 0, 0, 0.1), 0px 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        .shadow-btn {
+            box-shadow: 0px 4px 6px -4px rgba(0, 0, 0, 0.1), 0px 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .upload-area {
+            border-width: 1.6px;
         }
     </style>
 </head>
 
-<body class="bg-gray-50">
-    <!-- Navigation -->
-    <nav class="gradient-bg text-white shadow-lg">
-        <div class="container mx-auto px-4 py-6">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center gap-2">
-                    <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
-                        <path
-                            d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM15.657 5.343a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM15.657 14.657a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414l.707.707zM11 17a1 1 0 102 0v-1a1 1 0 10-2 0v1zM5.343 15.657a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414l-.707.707zM2 10a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.343 5.343a1 1 0 011.414-1.414l.707.707a1 1 0 01-1.414 1.414l-.707-.707zM10 6a4 4 0 100 8 4 4 0 000-8z" />
-                    </svg>
-                    <h1 class="text-2xl font-bold">DermaLens</h1>
-                </div>
-                <p class="text-sm opacity-90">AI-Powered Dog Skin Lesion Analysis</p>
+<body class="min-h-screen">
+    <!-- Header -->
+    <header class="bg-white/90 border-b border-[#E8E4DF] px-12 py-5 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <h2 class="text-[32px] font-bold text-[#1A1A1A] leading-[1.3]">DermaLens</h2>
+            <div class="bg-[#D4B5E8] rounded-2xl p-2 w-10 h-10 cursor-pointer hover:bg-[#C5A6D9] transition">
+                <!-- Menu icon -->
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
             </div>
         </div>
-    </nav>
+    </header>
 
     <!-- Main Content -->
-    <div class="container mx-auto px-4 py-12">
-        <!-- Hero Section -->
-        <div class="text-center mb-12">
-            <h2 class="text-4xl font-bold text-gray-900 mb-4">Diagnose Your Dog's Skin Condition</h2>
-            <p class="text-xl text-gray-600 max-w-2xl mx-auto">
-                Upload a clear image of your dog's skin to receive an AI-powered preliminary assessment.
-                This tool helps you determine whether professional veterinary care is needed.
-            </p>
+    <main class="max-w-7xl mx-auto px-12 py-16">
+        <!-- Hero Section (Initial View) -->
+        <div id="heroSection">
+            <div class="max-w-4xl mx-auto text-center mb-16 relative">
+                <!-- Decorative elements -->
+                <div class="absolute -left-20 -top-5 w-12 h-12 bg-[#A8D8F0] rounded-full"></div>
+                <div class="absolute -right-16 top-7 w-12 h-12 bg-[#F5D45F] rounded-full"></div>
+
+                <!-- Badge -->
+                <div
+                    class="inline-flex items-center gap-4 bg-white border border-[#E8E4DF] rounded-full px-8 py-3 mb-8">
+                    <div class="badge-dot"></div>
+                    <span class="text-[#6B6B6B] text-base">AI-powered diagnosis</span>
+                </div>
+
+                <!-- Heading -->
+                <h1 class="text-[40px] font-bold text-[#1A1A1A] leading-[1.2] mb-6">
+                    Your reliable partner for pet wellness
+                </h1>
+
+                <!-- Description -->
+                <p class="text-[#6B6B6B] text-base leading-[1.625] mb-10 max-w-2xl mx-auto">
+                    Upload a clear photo of your dog's skin condition and our AI will analyze it to help identify
+                    potential skin
+                    illnesses. Our expert system is dedicated to providing accurate assessments for your beloved pet.
+                </p>
+
+                <!-- Action Buttons -->
+                <div class="flex gap-4 justify-center mb-8">
+                    <button onclick="document.getElementById('uploadSection').scrollIntoView({behavior: 'smooth'})"
+                        class="bg-[#1A1A1A] text-white px-8 py-3 rounded-full text-base font-medium shadow-btn hover:bg-[#2A2A2A] transition">
+                        Upload Image
+                    </button>
+                    <button onclick="document.getElementById('servicesSection').scrollIntoView({behavior: 'smooth'})"
+                        class="bg-white border border-[#E8E4DF] text-[#1A1A1A] px-8 py-3 rounded-full text-base font-medium hover:bg-gray-50 transition">
+                        See all services →
+                    </button>
+                </div>
+
+                <!-- Hidden File Input -->
+                <input type="file" id="fileInput" accept="image/*" class="hidden">
+            </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <!-- Upload Section -->
-            <div class="lg:col-span-2">
-                <div class="card-shadow bg-white rounded-lg p-8">
-                    <h3 class="text-2xl font-bold text-gray-900 mb-6">Upload Image</h3>
-
-                    <!-- File Upload Area -->
-                    <div id="dropZone"
-                        class="border-2 border-dashed border-gray-300 rounded-lg p-12 text-center cursor-pointer hover:border-purple-500 hover:bg-purple-50 transition">
-                        <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor"
-                            viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4">
-                            </path>
+        <!-- Upload Section -->
+        <div id="uploadSection" class="max-w-3xl mx-auto mb-16">
+            <div id="dropArea"
+                class="upload-area bg-white border border-[#E8E4DF] rounded-3xl cursor-pointer shadow-btn overflow-hidden"
+                style="min-height: 384px;">
+                <div id="uploadPrompt" class="flex flex-col items-center justify-center py-20">
+                    <!-- Upload Icon -->
+                    <div class="bg-[#1A1A1A] rounded-full p-5 mb-6">
+                        <svg class="w-14 h-14 text-white" fill="none" stroke="currentColor" viewBox="0 0 56 56">
+                            <path d="M28 7v28M28 7l-11.67 11.67M28 7l11.67 11.67M7 35v14h42V35" stroke-width="4.67"
+                                stroke-linecap="round" stroke-linejoin="round" />
                         </svg>
-                        <p class="text-xl font-semibold text-gray-700 mb-2">Drag and drop your image here</p>
-                        <p class="text-gray-500 mb-4">or click to select a file</p>
-                        <p class="text-sm text-gray-400">PNG, JPG, JPEG (Max 10MB)</p>
-                        <input type="file" id="fileInput" accept="image/*" class="hidden">
                     </div>
 
-                    <!-- Preview Section -->
-                    <div id="previewSection" class="mt-8 hidden">
-                        <img id="preview" src="" alt="Preview" class="w-full max-h-96 object-contain rounded-lg mb-4">
-                        <button id="clearBtn"
-                            class="w-full bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded transition">
-                            Clear Image
-                        </button>
+                    <div class="text-center mb-6">
+                        <span class="text-[#1A1A1A] text-base font-normal">Click to upload </span>
+                        <span class="text-[#1A1A1A] text-base font-normal">or drag and drop</span>
                     </div>
 
-                    <!-- Analyze Button -->
-                    <button id="analyzeBtn" disabled
-                        class="w-full mt-6 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 disabled:from-gray-300 disabled:to-gray-300 disabled:cursor-not-allowed text-white font-bold py-3 px-4 rounded-lg transition transform hover:scale-105">
-                        Analyze Image
-                    </button>
+                    <p class="text-[#6B6B6B] text-base">PNG, JPG or WEBP (MAX. 10MB)</p>
+                </div>
 
-                    <!-- Loading Indicator -->
-                    <div id="loadingIndicator" class="hidden mt-6 flex justify-center">
-                        <div class="animate-spin">
-                            <svg class="w-8 h-8 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
-                                </path>
-                            </svg>
-                        </div>
-                        <p class="ml-4 text-purple-500 font-semibold">Analyzing image...</p>
-                    </div>
+                <div id="preview" class="hidden relative w-full h-full">
+                    <img id="previewImage" class="w-full h-full object-contain" alt="Preview"
+                        style="min-height: 384px;">
                 </div>
             </div>
 
-            <!-- Information Panel -->
-            <div>
-                <div class="card-shadow bg-white rounded-lg p-8 sticky top-8">
-                    <h3 class="text-2xl font-bold text-gray-900 mb-6">Disease Information</h3>
-
-                    <div id="infoContent" class="space-y-4 max-h-96 overflow-y-auto">
-                        <div class="text-gray-600 text-sm">
-                            <p class="mb-4">Select a disease or analyze an image to view detailed information.</p>
-
-                            <h4 class="font-bold text-gray-800 mt-6 mb-2">Available Conditions:</h4>
-                            <ul class="list-disc list-inside space-y-2 text-gray-700">
-                                <li><strong>Dermatitis:</strong> Inflammatory skin condition</li>
-                                <li><strong>Demodicosis:</strong> Mite infestation</li>
-                                <li><strong>Fungal Infections:</strong> Fungal disease</li>
-                                <li><strong>Healthy:</strong> Normal skin</li>
-                                <li><strong>Hypersensitivity:</strong> Allergic reaction</li>
-                                <li><strong>Ringworm:</strong> Contagious fungal infection</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
+            <div id="analyzeButtonContainer" class="hidden text-center mt-8">
+                <button id="analyzeBtn"
+                    class="bg-[#1A1A1A] text-white px-12 py-4 rounded-full text-base font-medium shadow-btn hover:bg-[#2A2A2A] transition">
+                    Analyze Image
+                </button>
             </div>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loading" class="hidden text-center py-16">
+            <div class="inline-block animate-spin rounded-full h-16 w-16 border-4 border-[#E8E4DF] border-t-[#1A1A1A]">
+            </div>
+            <p class="mt-6 text-[#6B6B6B] text-lg">Analyzing your pet's skin condition...</p>
         </div>
 
         <!-- Results Section -->
-        <div id="resultsSection" class="hidden mt-12 fade-in">
-            <div class="card-shadow bg-white rounded-lg p-8 mb-8">
-                <h3 class="text-2xl font-bold text-gray-900 mb-6">Analysis Results</h3>
+        <div id="resultsSection" class="hidden max-w-3xl mx-auto">
+            <!-- Uploaded Image Display -->
+            <div class="bg-white border border-[#E8E4DF] rounded-3xl p-2 mb-8 shadow-custom relative">
+                <img id="resultImage" class="w-full h-auto object-contain rounded-3xl" alt="Analyzed image"
+                    style="max-height: 500px;">
+            </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <!-- Prediction -->
-                    <div>
-                        <h4 class="text-lg font-semibold text-gray-700 mb-4">Prediction</h4>
-                        <div class="bg-gradient-to-br from-purple-100 to-pink-100 rounded-lg p-6">
-                            <p class="text-gray-600 text-sm mb-2">Detected Condition:</p>
-                            <p id="predictionClass" class="text-3xl font-bold text-gray-900 mb-4">-</p>
-                            <div class="flex items-center justify-between">
-                                <span class="text-gray-700 font-semibold">Confidence:</span>
-                                <span id="confidenceScore" class="text-2xl font-bold text-purple-600">0%</span>
-                            </div>
-                            <div class="w-full bg-gray-300 rounded-full h-3 mt-4">
-                                <div id="confidenceBar"
-                                    class="bg-gradient-to-r from-purple-500 to-pink-500 h-3 rounded-full transition-all"
-                                    style="width: 0%"></div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- All Predictions -->
-                    <div>
-                        <h4 class="text-lg font-semibold text-gray-700 mb-4">All Predictions</h4>
-                        <div id="allPredictions" class="space-y-3">
-                            <!-- Dynamically populated -->
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Disease Information -->
-                <div class="mt-8 p-6 bg-blue-50 border-l-4 border-blue-500 rounded">
-                    <h4 class="text-lg font-bold text-blue-900 mb-3" id="diseaseTitle">Disease Information</h4>
-                    <p id="diseaseDescription" class="text-gray-700 mb-4">-</p>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Diagnosis Card -->
+            <div class="bg-white border border-[#E8E4DF] rounded-3xl shadow-custom mb-8">
+                <!-- Header -->
+                <div class="border-b border-[#E8E4DF] px-8 py-8">
+                    <div class="flex justify-between items-start mb-6">
                         <div>
-                            <p class="text-sm font-semibold text-gray-600 mb-2">Severity Level:</p>
-                            <p id="severityLevel" class="text-lg font-bold">-</p>
+                            <p class="text-[#6B6B6B] text-base mb-2">Diagnosis Result</p>
+                            <h3 id="diagnosisName" class="text-2xl font-semibold text-[#1A1A1A]">Contact Dermatitis</h3>
                         </div>
-                        <div>
-                            <p class="text-sm font-semibold text-gray-600 mb-2">Recommendation:</p>
-                            <p id="recommendation" class="text-sm text-gray-700">-</p>
+                        <div id="severityBadge" class="flex items-center gap-2 bg-[#4A8F6F]/10 rounded-full px-4 py-2">
+                            <svg class="w-5 h-5 text-[#4A8F6F]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <span id="severityText" class="text-[#4A8F6F] text-base uppercase">low</span>
+                        </div>
+                    </div>
+
+                    <!-- Confidence Bar -->
+                    <div class="flex items-center gap-3">
+                        <div class="flex-1 bg-[#E8E4DF] rounded-full h-3">
+                            <div id="confidenceBar" class="bg-[#1A1A1A] h-3 rounded-full transition-all duration-500"
+                                style="width: 0%"></div>
+                        </div>
+                        <span id="confidenceText" class="text-[#1A1A1A] text-base font-medium">75% confidence</span>
+                    </div>
+
+                    <!-- See Other Possibilities Dropdown -->
+                    <div class="mt-6">
+                        <button id="togglePossibilities"
+                            class="flex items-center gap-2 text-[#6B6B6B] hover:text-[#1A1A1A] transition">
+                            <span class="text-sm font-medium">See other possibilities</span>
+                            <svg id="dropdownIcon" class="w-4 h-4 transition-transform duration-300" fill="none"
+                                stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </button>
+                        <div id="otherPredictions" class="hidden mt-4 space-y-3">
+                            <!-- Will be populated dynamically -->
                         </div>
                     </div>
                 </div>
 
-                <!-- Important Disclaimer -->
-                <div class="mt-8 p-4 bg-yellow-50 border-l-4 border-yellow-500 rounded">
-                    <p class="text-sm text-yellow-800">
-                        <strong>⚠️ Disclaimer:</strong> This AI analysis is a preliminary assessment only and should not
-                        replace professional veterinary diagnosis.
-                        Always consult with a qualified veterinarian for accurate diagnosis and treatment
-                        recommendations.
-                    </p>
+                <!-- Description & Actions -->
+                <div class="px-8 py-8 space-y-8">
+                    <!-- Description -->
+                    <div>
+                        <h4 class="text-base text-[#1A1A1A] font-medium mb-3">Description</h4>
+                        <p id="diseaseDescription" class="text-[#6B6B6B] text-base leading-[1.625]">
+                            Skin inflammation caused by direct contact with irritants or allergens such as certain
+                            plants, chemicals, or materials.
+                        </p>
+                    </div>
+
+                    <!-- Recommended Actions -->
+                    <div>
+                        <h4 class="text-base text-[#1A1A1A] font-medium mb-4">Recommended Actions</h4>
+                        <ul id="recommendationsList" class="space-y-3">
+                            <!-- Will be populated dynamically -->
+                        </ul>
+                    </div>
                 </div>
 
-                <!-- New Analysis Button -->
+                <!-- Disclaimer -->
+                <div class="bg-[#F5D45F]/10 border-t border-[#E8E4DF] px-8 py-6">
+                    <div class="flex gap-4 items-start">
+                        <svg class="w-5 h-5 text-[#1A1A1A] flex-shrink-0 mt-0.5" fill="none" stroke="currentColor"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                        <p class="text-[#6B6B6B] text-base leading-[1.625]">
+                            This is an AI-generated assessment and should not replace professional veterinary diagnosis.
+                            Please consult a licensed veterinarian for accurate diagnosis and treatment.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analyze Another Button -->
+            <div class="text-center">
                 <button id="newAnalysisBtn"
-                    class="w-full mt-8 bg-gray-800 hover:bg-gray-900 text-white font-bold py-3 px-4 rounded-lg transition">
+                    class="bg-[#1A1A1A] text-white px-12 py-4 rounded-full text-base font-medium shadow-btn hover:bg-[#2A2A2A] transition">
                     Analyze Another Image
                 </button>
             </div>
         </div>
 
-        <!-- Error Section -->
-        <div id="errorSection" class="hidden mt-12 fade-in">
-            <div class="card-shadow bg-red-50 border-l-4 border-red-500 rounded-lg p-8">
-                <h3 class="text-2xl font-bold text-red-900 mb-4">Error</h3>
-                <p id="errorMessage" class="text-red-700 mb-6">-</p>
-                <button id="errorDismissBtn"
-                    class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded transition">
-                    Dismiss
-                </button>
+        <!-- Services Section -->
+        <div id="servicesSection" class="mt-24">
+            <div class="text-center mb-12 relative">
+                <!-- Decorative elements -->
+                <div class="absolute left-16 top-14 w-12 h-12 bg-[#D4B5E8] rounded-full"></div>
+                <div class="absolute right-28 -bottom-12 w-12 h-12 bg-[#A8E8A8] rounded-full"></div>
+
+                <!-- Badge -->
+                <div
+                    class="inline-flex items-center gap-4 bg-white border border-[#E8E4DF] rounded-full px-8 py-3 mb-8">
+                    <div class="badge-dot"></div>
+                    <span class="text-[#6B6B6B] text-base">Services we provide</span>
+                </div>
+
+                <!-- Heading -->
+                <h2 class="text-[32px] font-bold text-[#1A1A1A] leading-[1.3]">
+                    Veterinary services tailored<br>for your pet's needs
+                </h2>
+            </div>
+
+            <!-- Service Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-9 mt-12">
+                <!-- Skin Health Analysis -->
+                <div class="bg-white border border-[#E8E4DF] rounded-3xl p-8 shadow-btn hover:shadow-custom transition">
+                    <div class="bg-[#F5D45F]/30 rounded-full w-16 h-16 flex items-center justify-center mb-8">
+                        <svg class="w-8 h-8 text-[#F5D45F]" fill="currentColor" viewBox="0 0 32 32">
+                            <path
+                                d="M16 5.6l-5.6 6.4v8l5.6-6.4v-8zm0 0l5.6 6.4v8l-5.6-6.4v-8zM10.4 8v7.2l-2.8 3.2V11.2L10.4 8zm13.2 0l2.8 3.2v7.2l-2.8-3.2V8z" />
+                        </svg>
+                    </div>
+                    <h3 class="text-2xl font-semibold text-[#1A1A1A] mb-4">Skin Health Analysis</h3>
+                    <p class="text-[#6B6B6B] text-base leading-[1.625] mb-8">
+                        Advanced AI technology to detect and identify potential skin conditions in your beloved pets.
+                    </p>
+                    <button onclick="document.getElementById('uploadSection').scrollIntoView({behavior: 'smooth'})"
+                        class="bg-[#1A1A1A] text-white px-8 py-3 rounded-full text-base font-medium w-full hover:bg-[#2A2A2A] transition">
+                        Start Analysis
+                    </button>
+                </div>
+
+                <!-- Expert Consultation -->
+                <div class="bg-white border border-[#E8E4DF] rounded-3xl p-8 shadow-btn hover:shadow-custom transition">
+                    <div class="bg-[#A8D8F0]/30 rounded-full w-16 h-16 flex items-center justify-center mb-8">
+                        <svg class="w-8 h-8 text-[#A8D8F0]" fill="currentColor" viewBox="0 0 32 32">
+                            <path
+                                d="M16 4a8 8 0 100 16 8 8 0 000-16zm0 2a6 6 0 110 12 6 6 0 010-12zm-3 18a2 2 0 00-2 2v2h10v-2a2 2 0 00-2-2h-6z" />
+                        </svg>
+                    </div>
+                    <h3 class="text-2xl font-semibold text-[#1A1A1A] mb-4">Expert Consultation</h3>
+                    <p class="text-[#6B6B6B] text-base leading-[1.625] mb-8">
+                        Connect with licensed veterinarians for professional advice and treatment recommendations.
+                    </p>
+                    <button
+                        class="bg-[#1A1A1A] text-white px-8 py-3 rounded-full text-base font-medium w-full hover:bg-[#2A2A2A] transition">
+                        Book Consultation
+                    </button>
+                </div>
+
+                <!-- Wellness Care -->
+                <div class="bg-white border border-[#E8E4DF] rounded-3xl p-8 shadow-btn hover:shadow-custom transition">
+                    <div class="bg-[#D4B5E8]/30 rounded-full w-16 h-16 flex items-center justify-center mb-8">
+                        <svg class="w-8 h-8 text-[#D4B5E8]" fill="currentColor" viewBox="0 0 32 32">
+                            <path d="M16 6l-3 3h-2v2l-3 3v6l3-3v6l3-3 3 3v-6l3 3v-6l-3-3v-2h-2l-3-3z" />
+                        </svg>
+                    </div>
+                    <h3 class="text-2xl font-semibold text-[#1A1A1A] mb-4">Wellness Care</h3>
+                    <p class="text-[#6B6B6B] text-base leading-[1.625] mb-8">
+                        Comprehensive preventative care to keep your pets healthy and happy throughout their lives.
+                    </p>
+                    <button
+                        class="bg-[#1A1A1A] text-white px-8 py-3 rounded-full text-base font-medium w-full hover:bg-[#2A2A2A] transition">
+                        Learn More
+                    </button>
+                </div>
             </div>
         </div>
-    </div>
+    </main>
 
     <!-- Footer -->
-    <footer class="bg-gray-900 text-white mt-20">
-        <div class="container mx-auto px-4 py-8 text-center">
-            <p class="text-gray-400">DermaLens © 2025 | AI-Powered Dog Skin Lesion Classification</p>
-            <p class="text-gray-500 text-sm mt-2">Built with ❤️ for pet health</p>
+    <footer class="bg-white/50 border-t border-[#E8E4DF] px-12 py-12 mt-16 relative">
+        <!-- Decorative elements -->
+        <div class="absolute left-20 bottom-0 w-12 h-12 bg-[#F5D45F] rounded-full"></div>
+        <div class="absolute right-32 bottom-20 w-12 h-12 bg-[#A8D8F0] rounded-full"></div>
+
+        <div class="max-w-7xl mx-auto">
+            <p class="text-[#6B6B6B] text-base leading-[1.625] text-center">
+                © 2025 PawCheck. This AI tool provides preliminary assessments only.
+                Always consult with a qualified veterinarian for proper diagnosis and treatment.
+            </p>
         </div>
     </footer>
 

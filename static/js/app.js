@@ -1,271 +1,421 @@
-/**
- * DermaLens Frontend Logic
- */
-
-// Global state
-let selectedFile = null;
-const API_BASE_URL = window.location.origin;
+// Disease information database
+const diseaseInfo = {
+    'demodicosis': {
+        description: 'Caused by Demodex mites that live in hair follicles. Can lead to hair loss, redness, and scaling. Common in puppies and immunocompromised dogs.',
+        severity: 'medium',
+        recommendations: [
+            'Schedule a vet appointment for skin scraping diagnosis',
+            'Avoid stressful situations that can weaken immune system',
+            'Maintain clean bedding and living environment',
+            'Consider immune system support supplements (vet-approved)',
+            'Do not attempt to treat at home without veterinary guidance'
+        ]
+    },
+    'Dermatitis': {
+        description: 'Skin inflammation caused by direct contact with irritants or allergens such as certain plants, chemicals, or materials.',
+        severity: 'low',
+        recommendations: [
+            'Identify and remove the source of irritation',
+            'Rinse the affected area with cool water',
+            'Avoid using harsh chemicals or cleaners around your pet',
+            'Consider switching to hypoallergenic bedding or bowls',
+            'Consult your vet if symptoms persist or worsen'
+        ]
+    },
+    'Fungal_infections': {
+        description: 'Fungal skin infections (like ringworm) that can cause circular patches of hair loss, scaly skin, and may be contagious to other pets and humans.',
+        severity: 'medium',
+        recommendations: [
+            'Isolate affected pet from other animals and children',
+            'Visit vet for fungal culture and treatment plan',
+            'Clean and disinfect all bedding, toys, and living areas',
+            'Wash hands after handling affected pet',
+            'Complete full course of antifungal medication as prescribed'
+        ]
+    },
+    'Healthy': {
+        description: 'No signs of skin disease detected. Your dog\'s skin appears healthy with normal coloration and texture.',
+        severity: 'low',
+        recommendations: [
+            'Continue regular grooming routine',
+            'Maintain balanced diet for skin health',
+            'Regular vet check-ups for preventive care',
+            'Monitor for any changes in skin condition',
+            'Provide adequate hydration and exercise'
+        ]
+    },
+    'Hypersensitivity': {
+        description: 'Allergic reaction causing skin irritation, itching, redness, and inflammation. Can be triggered by food, environmental factors, or flea bites.',
+        severity: 'medium',
+        recommendations: [
+            'Identify and eliminate potential allergens',
+            'Consider hypoallergenic diet trial',
+            'Use flea prevention products year-round',
+            'Keep indoor environment clean and dust-free',
+            'Consult vet about antihistamines or allergy testing'
+        ]
+    },
+    'ringworm': {
+        description: 'Highly contagious fungal infection causing circular, scaly patches of hair loss. Despite the name, it is not caused by worms.',
+        severity: 'high',
+        recommendations: [
+            'Seek immediate veterinary treatment',
+            'Quarantine infected pet from other animals and people',
+            'Thoroughly disinfect all surfaces and items',
+            'Wear gloves when handling pet or cleaning',
+            'All household pets should be examined by vet'
+        ]
+    }
+};
 
 // DOM Elements
-const dropZone = document.getElementById('dropZone');
 const fileInput = document.getElementById('fileInput');
-const previewSection = document.getElementById('previewSection');
+const heroSection = document.getElementById('heroSection');
+const uploadSection = document.getElementById('uploadSection');
+const dropArea = document.getElementById('dropArea');
+const uploadPrompt = document.getElementById('uploadPrompt');
 const preview = document.getElementById('preview');
+const previewImage = document.getElementById('previewImage');
+const analyzeButtonContainer = document.getElementById('analyzeButtonContainer');
 const analyzeBtn = document.getElementById('analyzeBtn');
-const loadingIndicator = document.getElementById('loadingIndicator');
+const loading = document.getElementById('loading');
 const resultsSection = document.getElementById('resultsSection');
-const errorSection = document.getElementById('errorSection');
-const infoContent = document.getElementById('infoContent');
 const newAnalysisBtn = document.getElementById('newAnalysisBtn');
-const clearBtn = document.getElementById('clearBtn');
+const resultImage = document.getElementById('resultImage');
 
-// Event Listeners
-dropZone.addEventListener('click', () => fileInput.click());
-dropZone.addEventListener('dragover', handleDragOver);
-dropZone.addEventListener('dragleave', handleDragLeave);
-dropZone.addEventListener('drop', handleDrop);
-fileInput.addEventListener('change', handleFileSelect);
-analyzeBtn.addEventListener('click', handleAnalyze);
-newAnalysisBtn.addEventListener('click', handleNewAnalysis);
-clearBtn.addEventListener('click', handleClearImage);
+let currentFile = null;
 
-/**
- * Drag and drop handlers
- */
-function handleDragOver(e) {
-    e.preventDefault();
-    e.stopPropagation();
-    dropZone.classList.add('border-purple-500', 'bg-purple-50');
-}
+// File Input
+fileInput.addEventListener('change', (e) => {
+    handleFile(e.target.files[0]);
+});
 
-function handleDragLeave(e) {
-    e.preventDefault();
-    e.stopPropagation();
-    dropZone.classList.remove('border-purple-500', 'bg-purple-50');
-}
-
-function handleDrop(e) {
-    e.preventDefault();
-    e.stopPropagation();
-    dropZone.classList.remove('border-purple-500', 'bg-purple-50');
-
-    const files = e.dataTransfer.files;
-    if (files.length > 0) {
-        handleFileSelect({ target: { files } });
+// Drop Area Click
+dropArea.addEventListener('click', () => {
+    if (!currentFile) {
+        fileInput.click();
     }
+});
+
+// Drag and Drop
+['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+    dropArea.addEventListener(eventName, preventDefaults, false);
+});
+
+function preventDefaults(e) {
+    e.preventDefault();
+    e.stopPropagation();
 }
 
-/**
- * Handle file selection
- */
-function handleFileSelect(e) {
-    const files = e.target.files;
-    if (files.length === 0) return;
+['dragenter', 'dragover'].forEach(eventName => {
+    dropArea.addEventListener(eventName, () => {
+        dropArea.classList.add('drag-over');
+    }, false);
+});
 
-    const file = files[0];
+['dragleave', 'drop'].forEach(eventName => {
+    dropArea.addEventListener(eventName, () => {
+        dropArea.classList.remove('drag-over');
+    }, false);
+});
 
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-        showError('Please select a valid image file (JPEG or PNG)');
+dropArea.addEventListener('drop', (e) => {
+    const dt = e.dataTransfer;
+    const files = dt.files;
+    handleFile(files[0]);
+}, false);
+
+// Handle File
+function handleFile(file) {
+    if (!file || !file.type.startsWith('image/')) {
+        alert('Please upload a valid image file.');
         return;
     }
 
-    // Validate file size (10MB)
-    const maxSize = 10 * 1024 * 1024;
-    if (file.size > maxSize) {
-        showError(`File is too large. Maximum size is 10MB. Your file is ${(file.size / (1024 * 1024)).toFixed(2)}MB`);
-        return;
-    }
-
-    selectedFile = file;
-
-    // Show preview
+    currentFile = file;
     const reader = new FileReader();
+
     reader.onload = (e) => {
-        preview.src = e.target.result;
-        previewSection.classList.remove('hidden');
-        analyzeBtn.disabled = false;
-        analyzeBtn.classList.remove('disabled:from-gray-300', 'disabled:to-gray-300', 'disabled:cursor-not-allowed');
-        hideError();
+        previewImage.src = e.target.result;
+        uploadPrompt.classList.add('hidden');
+        preview.classList.remove('hidden');
+        analyzeButtonContainer.classList.remove('hidden');
     };
+
     reader.readAsDataURL(file);
 }
 
-/**
- * Clear selected image
- */
-function handleClearImage() {
-    selectedFile = null;
+function resetUpload() {
+    currentFile = null;
     fileInput.value = '';
-    previewSection.classList.add('hidden');
-    preview.src = '';
-    analyzeBtn.disabled = true;
-    analyzeBtn.classList.add('disabled:from-gray-300', 'disabled:to-gray-300', 'disabled:cursor-not-allowed');
-    resultsSection.classList.add('hidden');
+    previewImage.src = '';
+    preview.classList.add('hidden');
+    analyzeButtonContainer.classList.add('hidden');
+    uploadPrompt.classList.remove('hidden');
 }
 
-/**
- * Handle image analysis
- */
-async function handleAnalyze() {
-    if (!selectedFile) {
-        showError('Please select an image first');
-        return;
-    }
-
-    // Disable analyze button and show loading
-    analyzeBtn.disabled = true;
-    loadingIndicator.classList.remove('hidden');
-    hideError();
+function resetToUpload() {
     resultsSection.classList.add('hidden');
+    uploadSection.classList.remove('hidden');
+    resetUpload();
+}
+
+// Analyze Button
+analyzeBtn.addEventListener('click', async () => {
+    if (!currentFile) return;
+
+    // Hide upload section, show loading
+    uploadSection.classList.add('hidden');
+    loading.classList.remove('hidden');
 
     try {
         const formData = new FormData();
-        formData.append('file', selectedFile);
+        formData.append('file', currentFile);
 
-        // Send prediction request
-        const response = await axios.post(`${API_BASE_URL}/predict`, formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data'
-            }
+        const response = await fetch('/predict', {
+            method: 'POST',
+            body: formData
         });
 
-        const data = response.data;
-        displayResults(data);
-
-    } catch (error) {
-        console.error('Prediction error:', error);
-        if (error.response?.status === 503) {
-            showError('Model is not loaded yet. Please ensure the model has been trained and placed in the checkpoints folder.');
-        } else if (error.response?.data?.detail) {
-            showError(error.response.data.detail);
-        } else {
-            showError('Error analyzing image. Please try again.');
+        if (!response.ok) {
+            throw new Error('Prediction failed');
         }
+
+        const result = await response.json();
+        displayResults(result);
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Analysis failed. Please try again.');
+        resetToUpload();
     } finally {
-        analyzeBtn.disabled = false;
-        loadingIndicator.classList.add('hidden');
+        loading.classList.add('hidden');
     }
-}
+});
 
-/**
- * Display prediction results
- */
-function displayResults(data) {
-    const predictedClass = data.predicted_class;
-    const confidence = (data.confidence * 100).toFixed(1);
-    const allPredictions = data.all_predictions;
-    const classInfo = data.class_info;
+// New Analysis Button
+newAnalysisBtn.addEventListener('click', () => {
+    resetToUpload();
+});
 
-    // Update prediction section
-    document.getElementById('predictionClass').textContent = predictedClass;
-    document.getElementById('confidenceScore').textContent = `${confidence}%`;
-    document.getElementById('confidenceBar').style.width = `${confidence}%`;
+// Display Results
+function displayResults(result) {
+    const predictedClass = result.predicted_class;
+    const confidence = Math.round(result.confidence * 100);
 
-    // Update all predictions
-    const allPredictionsDiv = document.getElementById('allPredictions');
-    allPredictionsDiv.innerHTML = '';
+    // Use class_info from API response, fallback to local data if not available
+    const classInfo = result.class_info || diseaseInfo[predictedClass] || diseaseInfo['Dermatitis'];
 
-    // Sort predictions by confidence
-    const sortedPredictions = Object.entries(allPredictions)
-        .sort(([, a], [, b]) => b - a);
+    // Set result image
+    resultImage.src = previewImage.src;
 
-    sortedPredictions.forEach(([className, confScore]) => {
-        const confPercentage = (confScore * 100).toFixed(1);
-        const barWidth = (confScore * 100);
+    // Set diagnosis name
+    document.getElementById('diagnosisName').textContent = formatDiseaseName(predictedClass);
 
-        const html = `
-            <div>
-                <div class="flex justify-between mb-1">
-                    <span class="text-sm font-medium text-gray-700">${className}</span>
-                    <span class="text-sm font-bold text-gray-600">${confPercentage}%</span>
-                </div>
-                <div class="w-full bg-gray-200 rounded-full h-2">
-                    <div class="bg-gradient-to-r from-purple-400 to-pink-400 h-2 rounded-full transition-all" style="width: ${barWidth}%"></div>
-                </div>
-            </div>
-        `;
-        allPredictionsDiv.innerHTML += html;
-    });
+    // Determine severity level from API response
+    let severityLevel = 'low';
+    if (classInfo.severity) {
+        const severityStr = classInfo.severity.toLowerCase();
+        if (severityStr.includes('high')) {
+            severityLevel = 'high';
+        } else if (severityStr.includes('medium') || severityStr.includes('low-medium')) {
+            severityLevel = 'medium';
+        } else if (severityStr === 'none') {
+            severityLevel = 'none';
+        }
+    }
 
-    // Update disease information
-    document.getElementById('diseaseTitle').textContent = `${predictedClass} - ${classInfo.severity}`;
-    document.getElementById('diseaseDescription').textContent = classInfo.description;
-    document.getElementById('severityLevel').textContent = classInfo.severity;
-    document.getElementById('recommendation').textContent = classInfo.recommendation;
+    // Set severity badge with dynamic styling
+    const severityBadge = document.getElementById('severityBadge');
+    const severityText = document.getElementById('severityText');
+    const severityIcon = severityBadge.querySelector('svg');
 
-    // Update severity color
-    const severityElement = document.getElementById('severityLevel');
-    severityElement.classList.remove('severity-high', 'severity-medium', 'severity-low', 'text-gray-700');
+    // Update severity text
+    severityText.textContent = classInfo.severity || severityLevel;
 
-    if (classInfo.severity === 'High') {
-        severityElement.classList.add('severity-high');
-    } else if (classInfo.severity === 'Medium' || classInfo.severity === 'Low-Medium') {
-        severityElement.classList.add('severity-medium');
-    } else if (classInfo.severity === 'Low') {
-        severityElement.classList.add('severity-low');
+    // Apply severity-based styling
+    if (severityLevel === 'high') {
+        severityBadge.className = 'flex items-center gap-2 bg-red-100 rounded-full px-4 py-2';
+        severityIcon.setAttribute('class', 'w-5 h-5 text-red-600');
+        severityText.className = 'text-red-600 text-base uppercase font-medium';
+    } else if (severityLevel === 'medium') {
+        severityBadge.className = 'flex items-center gap-2 bg-yellow-100 rounded-full px-4 py-2';
+        severityIcon.setAttribute('class', 'w-5 h-5 text-yellow-600');
+        severityText.className = 'text-yellow-600 text-base uppercase font-medium';
+    } else if (severityLevel === 'none') {
+        severityBadge.className = 'flex items-center gap-2 bg-green-100 rounded-full px-4 py-2';
+        severityIcon.setAttribute('class', 'w-5 h-5 text-green-600');
+        severityText.className = 'text-green-600 text-base uppercase font-medium';
     } else {
-        severityElement.classList.add('text-gray-700');
+        severityBadge.className = 'flex items-center gap-2 bg-[#4A8F6F]/10 rounded-full px-4 py-2';
+        severityIcon.setAttribute('class', 'w-5 h-5 text-[#4A8F6F]');
+        severityText.className = 'text-[#4A8F6F] text-base uppercase font-medium';
     }
 
-    // Show results section
-    resultsSection.classList.remove('hidden');
+    // Set confidence with color coding based on level
+    const confidenceTextEl = document.getElementById('confidenceText');
+    confidenceTextEl.textContent = `${confidence}% confidence`;
 
-    // Scroll to results
+    const confidenceBar = document.getElementById('confidenceBar');
+    let confidenceColor = '';
+
+    // Color code confidence bar and determine color for severity badge
+    if (confidence >= 75) {
+        confidenceBar.className = 'bg-green-600 h-3 rounded-full transition-all duration-500';
+        confidenceColor = 'green';
+    } else if (confidence >= 50) {
+        confidenceBar.className = 'bg-yellow-500 h-3 rounded-full transition-all duration-500';
+        confidenceColor = 'yellow';
+    } else {
+        confidenceBar.className = 'bg-red-500 h-3 rounded-full transition-all duration-500';
+        confidenceColor = 'red';
+    }
+
+    // Override severity badge color to match confidence bar for better visual consistency
+    if (severityLevel === 'high') {
+        // Use red for high severity regardless of confidence
+        severityBadge.className = 'flex items-center gap-2 bg-red-100 rounded-full px-4 py-2';
+        severityIcon.class = 'w-5 h-5 text-red-600';
+        severityText.className = 'text-red-600 text-base uppercase font-medium';
+    } else if (severityLevel === 'medium') {
+        // Use yellow for medium severity regardless of confidence
+        severityBadge.className = 'flex items-center gap-2 bg-yellow-100 rounded-full px-4 py-2';
+        severityIcon.class = 'w-5 h-5 text-yellow-600';
+        severityText.className = 'text-yellow-600 text-base uppercase font-medium';
+    } else if (severityLevel === 'none') {
+        // Use green for none/healthy
+        severityBadge.className = 'flex items-center gap-2 bg-green-100 rounded-full px-4 py-2';
+        severityIcon.class = 'w-5 h-5 text-green-600';
+        severityText.className = 'text-green-600 text-base uppercase font-medium';
+    } else {
+        // For low severity, use teal/green
+        severityBadge.className = 'flex items-center gap-2 bg-[#4A8F6F]/10 rounded-full px-4 py-2';
+        severityIcon.class = 'w-5 h-5 text-[#4A8F6F]';
+        severityText.className = 'text-[#4A8F6F] text-base uppercase font-medium';
+    }
+
     setTimeout(() => {
-        resultsSection.scrollIntoView({ behavior: 'smooth' });
+        confidenceBar.style.width = `${confidence}%`;
+    }, 100);
+
+    // Set description from API response
+    const description = classInfo.description || 'No detailed description available.';
+    document.getElementById('diseaseDescription').textContent = description;
+
+    // Set recommendations from API response
+    const recommendationsList = document.getElementById('recommendationsList');
+
+    // Check if recommendations exist in API response
+    let recommendations = [];
+    if (classInfo.recommendation) {
+        // Split recommendation by periods or newlines
+        recommendations = classInfo.recommendation
+            .split(/[.\n]\s*/)
+            .filter(rec => rec.trim().length > 0)
+            .map(rec => rec.trim());
+    }
+
+    // Fallback to local recommendations if API doesn't provide them
+    if (recommendations.length === 0 && diseaseInfo[predictedClass]) {
+        recommendations = diseaseInfo[predictedClass].recommendations;
+    }
+
+    // If still no recommendations, provide a default
+    if (recommendations.length === 0) {
+        recommendations = ['Consult with a licensed veterinarian for proper diagnosis and treatment'];
+    }
+
+    recommendationsList.innerHTML = recommendations.map(rec => `
+        <li class="flex items-start gap-6">
+            <div class="w-2 h-2 rounded-full bg-[#1A1A1A] flex-shrink-0 mt-3"></div>
+            <span class="text-[#6B6B6B] text-base leading-[1.625] flex-1">${rec}</span>
+        </li>
+    `).join('');
+
+    // Populate other predictions dropdown
+    if (result.all_predictions) {
+        console.log('All predictions:', result.all_predictions);
+
+        const otherPredictionsContainer = document.getElementById('otherPredictions');
+        const predictions = Object.entries(result.all_predictions)
+            .map(([className, conf]) => ({
+                name: className,
+                confidence: Math.round(conf * 100)
+            }))
+            .sort((a, b) => b.confidence - a.confidence)
+            .filter(pred => pred.name !== predictedClass); // Exclude the main prediction
+
+        otherPredictionsContainer.innerHTML = predictions.map(pred => {
+            let barColor = '';
+            if (pred.confidence >= 75) {
+                barColor = 'bg-green-600';
+            } else if (pred.confidence >= 50) {
+                barColor = 'bg-yellow-500';
+            } else {
+                barColor = 'bg-red-500';
+            }
+
+            return `
+                <div class="flex items-center gap-4">
+                    <div class="flex-1">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-sm font-medium text-[#1A1A1A]">${formatDiseaseName(pred.name)}</span>
+                            <span class="text-sm text-[#6B6B6B]">${pred.confidence}%</span>
+                        </div>
+                        <div class="bg-[#E8E4DF] rounded-full h-2">
+                            <div class="${barColor} h-2 rounded-full transition-all duration-500" style="width: ${pred.confidence}%"></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    // Scroll to results and show
+    resultsSection.classList.remove('hidden');
+    setTimeout(() => {
+        resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 100);
 }
 
-/**
- * Handle new analysis
- */
-function handleNewAnalysis() {
-    handleClearImage();
-    dropZone.scrollIntoView({ behavior: 'smooth' });
+// Helper function to format disease names
+function formatDiseaseName(name) {
+    const nameMap = {
+        'demodicosis': 'Demodicosis',
+        'Demodicosis': 'Demodicosis',
+        'Dermatitis': 'Contact Dermatitis',
+        'dermatitis': 'Contact Dermatitis',
+        'Fungal_infections': 'Fungal Infection',
+        'Fungal Infections': 'Fungal Infection',
+        'fungal_infections': 'Fungal Infection',
+        'Healthy': 'Healthy Skin',
+        'healthy': 'Healthy Skin',
+        'Hypersensitivity': 'Hypersensitivity',
+        'hypersensitivity': 'Hypersensitivity',
+        'ringworm': 'Ringworm',
+        'Ringworm': 'Ringworm'
+    };
+    return nameMap[name] || name;
 }
 
-/**
- * Show error message
- */
-function showError(message) {
-    document.getElementById('errorMessage').textContent = message;
-    errorSection.classList.remove('hidden');
+// New Analysis Button
+document.getElementById('newAnalysisBtn').addEventListener('click', () => {
     resultsSection.classList.add('hidden');
-}
+    uploadPrompt.classList.remove('hidden');
+    imagePreview.classList.add('hidden');
+    fileInput.value = '';
+    document.getElementById('uploadSection').scrollIntoView({ behavior: 'smooth' });
+});
 
-/**
- * Hide error message
- */
-function hideError() {
-    errorSection.classList.add('hidden');
-}
+// Toggle Other Possibilities Dropdown
+document.getElementById('togglePossibilities').addEventListener('click', () => {
+    const dropdown = document.getElementById('otherPredictions');
+    const icon = document.getElementById('dropdownIcon');
 
-// Setup error dismiss button
-document.getElementById('errorDismissBtn').addEventListener('click', hideError);
-
-/**
- * Initialize app
- */
-async function initializeApp() {
-    try {
-        // Check API health
-        const healthResponse = await axios.get(`${API_BASE_URL}/health`);
-        console.log('API Health:', healthResponse.data);
-
-        if (!healthResponse.data.model_loaded) {
-            console.warn('Model not loaded. Please train the model first.');
-        }
-
-        // Load class information
-        const classesResponse = await axios.get(`${API_BASE_URL}/classes`);
-        console.log('Available classes:', classesResponse.data);
-
-    } catch (error) {
-        console.error('Failed to initialize app:', error);
-        console.warn('Make sure the backend API is running on port 8000');
+    if (dropdown.classList.contains('hidden')) {
+        dropdown.classList.remove('hidden');
+        icon.style.transform = 'rotate(180deg)';
+    } else {
+        dropdown.classList.add('hidden');
+        icon.style.transform = 'rotate(0deg)';
     }
-}
-
-// Initialize on page load
-document.addEventListener('DOMContentLoaded', initializeApp);
+});
