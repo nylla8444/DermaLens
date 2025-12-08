@@ -38,8 +38,8 @@ env/
 .DS_Store
 
 # Project specific
-checkpoints/*.pth
-checkpoints/*.pt
+# checkpoints/*.pth
+# checkpoints/*.pt
 logs/*.log
 logs/*.csv
 *.tmp
@@ -50,10 +50,6 @@ logs/*.csv
 dataset/test/
 dataset/train/
 dataset/valid/
-
-# Models
-models/*.pth
-models/*.pt
 
 # Cache
 .cache/
