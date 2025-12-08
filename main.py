@@ -175,7 +175,23 @@ async def health():
 
 @app.get("/info")
 async def info():
-    """Get API information"""
+    """Get API information including model metrics"""
+    model_accuracy = "Unknown"
+    model_epoch = "Unknown"
+    
+    # Try to read accuracy from checkpoint
+    checkpoint_path = Path("./checkpoints/best_model.pth")
+    if checkpoint_path.exists():
+        try:
+            checkpoint = torch.load(checkpoint_path, map_location='cpu')
+            if 'metrics' in checkpoint:
+                valid_acc = checkpoint['metrics'].get('valid_acc')
+                if valid_acc:
+                    model_accuracy = f"{valid_acc * 100:.2f}%"
+                model_epoch = checkpoint.get('epoch', 'Unknown')
+        except Exception as e:
+            logger.warning(f"Could not read model metrics: {e}")
+    
     return {
         "api_name": "DermaLens",
         "version": "1.0.0",
@@ -184,7 +200,9 @@ async def info():
             "architecture": config.get("model", {}).get("architecture", "resnet50"),
             "num_classes": config.get("dataset", {}).get("num_classes", 6),
             "device": device,
-            "loaded": model is not None
+            "loaded": model is not None,
+            "best_epoch": model_epoch,
+            "validation_accuracy": model_accuracy
         },
         "max_upload_size_mb": config.get("api", {}).get("max_upload_size", 10485760) / (1024 * 1024)
     }
