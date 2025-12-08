@@ -272,29 +272,6 @@ function displayResults(result) {
         confidenceColor = 'red';
     }
 
-    // Override severity badge color to match confidence bar for better visual consistency
-    if (severityLevel === 'high') {
-        // Use red for high severity regardless of confidence
-        severityBadge.className = 'flex items-center gap-2 bg-red-100 rounded-full px-4 py-2';
-        severityIcon.class = 'w-5 h-5 text-red-600';
-        severityText.className = 'text-red-600 text-base uppercase font-medium';
-    } else if (severityLevel === 'medium') {
-        // Use yellow for medium severity regardless of confidence
-        severityBadge.className = 'flex items-center gap-2 bg-yellow-100 rounded-full px-4 py-2';
-        severityIcon.class = 'w-5 h-5 text-yellow-600';
-        severityText.className = 'text-yellow-600 text-base uppercase font-medium';
-    } else if (severityLevel === 'none') {
-        // Use green for none/healthy
-        severityBadge.className = 'flex items-center gap-2 bg-green-100 rounded-full px-4 py-2';
-        severityIcon.class = 'w-5 h-5 text-green-600';
-        severityText.className = 'text-green-600 text-base uppercase font-medium';
-    } else {
-        // For low severity, use teal/green
-        severityBadge.className = 'flex items-center gap-2 bg-[#4A8F6F]/10 rounded-full px-4 py-2';
-        severityIcon.class = 'w-5 h-5 text-[#4A8F6F]';
-        severityText.className = 'text-[#4A8F6F] text-base uppercase font-medium';
-    }
-
     setTimeout(() => {
         confidenceBar.style.width = `${confidence}%`;
     }, 100);
