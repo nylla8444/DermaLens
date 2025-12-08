@@ -179,7 +179,8 @@ class Trainer:
         num_epochs: int = 100,
         early_stopping_patience: int = 15,
         warmup_epochs: int = 5,
-        unfreeze_backbone_epoch: int = None
+        unfreeze_backbone_epoch: int = None,
+        is_pretrained: bool = True
     ):
         """
         Train model for multiple epochs
@@ -189,17 +190,23 @@ class Trainer:
             early_stopping_patience: Patience for early stopping
             warmup_epochs: Number of warmup epochs with frozen backbone
             unfreeze_backbone_epoch: Epoch at which to unfreeze backbone
+            is_pretrained: Whether model uses pretrained weights
         """
         patience_counter = 0
         
         for epoch in range(num_epochs):
-            # Unfreeze backbone after warmup
-            if unfreeze_backbone_epoch is None:
-                unfreeze_backbone_epoch = warmup_epochs
-            
-            if epoch == unfreeze_backbone_epoch:
-                print(f"Unfreezing backbone at epoch {epoch}")
-                self.model.unfreeze_backbone()
+            # Only apply warmup/unfreeze strategy if using pretrained weights
+            if is_pretrained:
+                if unfreeze_backbone_epoch is None:
+                    unfreeze_backbone_epoch = warmup_epochs
+                
+                if epoch == unfreeze_backbone_epoch:
+                    print(f"Unfreezing backbone at epoch {epoch}")
+                    self.model.unfreeze_backbone()
+            else:
+                # Training from scratch - all weights trainable from epoch 0
+                if epoch == 0:
+                    print("Training from scratch - all weights are trainable from epoch 0")
             
             # Training
             train_loss, train_acc = self.train_epoch(epoch)
@@ -384,10 +391,12 @@ def train_model(
     
     # Train model
     print("\nStarting training...")
+    is_pretrained = config.get("model", {}).get("pretrained", True)
     trainer.fit(
         num_epochs=config.get("training", {}).get("num_epochs", 100),
         early_stopping_patience=config.get("training", {}).get("early_stopping_patience", 15),
-        warmup_epochs=config.get("training", {}).get("warmup_epochs", 5)
+        warmup_epochs=config.get("training", {}).get("warmup_epochs", 5),
+        is_pretrained=is_pretrained
     )
     
     # Plot history
