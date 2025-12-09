@@ -238,9 +238,9 @@ async def predict(file: UploadFile = File(...)):
     if model is None:
         raise HTTPException(status_code=503, detail="Model not loaded. Please try again later.")
     
-    # Check file type
-    if file.content_type not in ["image/jpeg", "image/png", "image/jpg"]:
-        raise HTTPException(status_code=400, detail="File must be JPEG or PNG image")
+    # Check file type - support common image formats
+    if file.content_type not in ["image/jpeg", "image/png", "image/jpg", "image/webp"]:
+        raise HTTPException(status_code=400, detail="File must be JPEG, PNG, or WebP image")
     
     # Check file size
     max_size = config.get("api", {}).get("max_upload_size", 10485760)
