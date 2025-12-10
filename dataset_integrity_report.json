@@ -1,0 +1,140 @@
+{
+  "timestamp": "2025-12-10T05:12:32.863666",
+  "summary": {
+    "total_checked": 5530,
+    "valid": 5530,
+    "invalid": 0
+  },
+  "by_split": {
+    "train": {
+      "total": 3911,
+      "valid": 3911,
+      "invalid": 0,
+      "by_class": {
+        "demodicosis": {
+          "total": 632,
+          "valid": 632,
+          "invalid": 0,
+          "invalid_files": []
+        },
+        "Dermatitis": {
+          "total": 728,
+          "valid": 728,
+          "invalid": 0,
+          "invalid_files": []
+        },
+        "Fungal_infections": {
+          "total": 471,
+          "valid": 471,
+          "invalid": 0,
+          "invalid_files": []
+        },
+        "Healthy": {
+          "total": 864,
+          "valid": 864,
+          "invalid": 0,
+          "invalid_files": []
+        },
+        "Hypersensitivity": {
+          "total": 293,
+          "valid": 293,
+          "invalid": 0,
+          "invalid_files": []
+        },
+        "ringworm": {
+          "total": 923,
+          "valid": 923,
+          "invalid": 0,
+          "invalid_files": []
+        }
+      }
+    },
+    "valid": {
+      "total": 1023,
+      "valid": 1023,
+      "invalid": 0,
+      "by_class": {
+        "demodicosis": {
+          "total": 185,
+          "valid": 185,
+          "invalid": 0,
+          "invalid_files": []
+        },
+        "Dermatitis": {
+          "total": 214,
+          "valid": 214,
+          "invalid": 0,
+          "invalid_files": []
+        },
+        "Fungal_infections": {
+          "total": 118,
+          "valid": 118,
+          "invalid": 0,
+          "invalid_files": []
+        },
+        "Healthy": {
+          "total": 190,
+          "valid": 190,
+          "invalid": 0,
+          "invalid_files": []
+        },
+        "Hypersensitivity": {
+          "total": 76,
+          "valid": 76,
+          "invalid": 0,
+          "invalid_files": []
+        },
+        "ringworm": {
+          "total": 240,
+          "valid": 240,
+          "invalid": 0,
+          "invalid_files": []
+        }
+      }
+    },
+    "test": {
+      "total": 596,
+      "valid": 596,
+      "invalid": 0,
+      "by_class": {
+        "demodicosis": {
+          "total": 111,
+          "valid": 111,
+          "invalid": 0,
+          "invalid_files": []
+        },
+        "Dermatitis": {
+          "total": 105,
+          "valid": 105,
+          "invalid": 0,
+          "invalid_files": []
+        },
+        "Fungal_infections": {
+          "total": 74,
+          "valid": 74,
+          "invalid": 0,
+          "invalid_files": []
+        },
+        "Healthy": {
+          "total": 120,
+          "valid": 120,
+          "invalid": 0,
+          "invalid_files": []
+        },
+        "Hypersensitivity": {
+          "total": 42,
+          "valid": 42,
+          "invalid": 0,
+          "invalid_files": []
+        },
+        "ringworm": {
+          "total": 144,
+          "valid": 144,
+          "invalid": 0,
+          "invalid_files": []
+        }
+      }
+    }
+  },
+  "invalid_files": {}
+}
