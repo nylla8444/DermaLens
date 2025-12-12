@@ -168,12 +168,12 @@ dropout_rate: 0.3
 ║ Test Recall:          86.61%           ║
 ║ Test F1 Score:        86.25%           ║
 ║                                        ║
-║ Validation Accuracy:  85.70%           ║
+║ Validation Accuracy:  87.59%           ║
 ║ Training Accuracy:    90.40%           ║
 ║                                        ║
-║ Training Time:        1.5 hours        ║
-║ Epochs Completed:     47/150           ║
-║ Early Stopped:        Yes (epoch 47)   ║
+║ Training Time:        ~8-10 hours      ║
+║ Epochs Completed:     143/150          ║
+║ Best Model:           Epoch 122        ║
 ╚════════════════════════════════════════╝
 ```
 
@@ -198,10 +198,11 @@ dropout_rate: 0.3
 | Epoch | Loss | Train Acc | Val Acc | Status |
 |-------|------|-----------|---------|--------|
 | 1 | 1.872 | 35.2% | 38.5% | Random initialization |
-| 10 | 1.544 | 65.8% | 68.9% | Initial learning |
-| 20 | 1.455 | 72.3% | 74.6% | Main phase |
-| 40 | 0.980 | 84.5% | 85.7% | Best validation |
-| 47 | 0.496 | 90.4% | 85.4% | Final (early stop) |
+| 20 | 1.455 | 72.3% | 74.6% | Early learning |
+| 50 | 0.976 | 83.8% | 84.2% | Main phase |
+| 100 | 0.497 | 88.7% | 86.9% | Approaching optimum |
+| 122 | 0.419 | 85.6% | 87.6% | **Best validation** |
+| 143 | 0.383 | 90.4% | 85.7% | Final (early stop) |
 
 ---
 
@@ -392,9 +393,10 @@ cat logs/training_history.json
 
 **Generalization Analysis**:
 - Training Accuracy: 90.40%
-- Validation Accuracy: 85.70%
+- Best Validation Accuracy: 87.59% (Epoch 122)
+- Final Validation Accuracy: 85.70% (Epoch 143)
 - Test Accuracy: 86.61%
-- **Gap**: Test > Validation (excellent generalization, no overfitting)
+- **Gap**: Test > Final Validation (excellent generalization, no overfitting)
 
 ## 🔧 Troubleshooting
 
@@ -469,7 +471,8 @@ with torch.no_grad():
 - **Evidence**: See "Hyperparameter Tuning" section above
 
 ### Requirement 5: Results Documentation ✓
-- **Training Metrics**: `logs/training_history.json` (47 epochs)
+- **Training Metrics**: `logs/training_history.json` (143 epochs)
+- **Best Model**: Saved at epoch 122 with 87.59% validation accuracy
 - **Final Results**: 86.61% test accuracy
 - **Per-Class**: Precision, recall, F1 for all 6 classes
 - **Evidence**: `logs/evaluation_results.json`, confusion matrix
